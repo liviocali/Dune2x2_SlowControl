@@ -1,16 +1,21 @@
 #!/usr/bin/python
+
 import time, math
 import subprocess
+#import sys, os
+#sys.path.append("/home/pi/requests-main")
+#import requests
 
 if __name__ == "__main__":
 
     import max31865
 
-    db_url  = "http://130.92.128.162"
+    db_ip  = "130.92.128.162"
     db_port = 8086
-    db_name = "singlemodule_nov2020"
-
-    pos = "tpc1"
+    db_name = "argoncube"
+    db_url = "http://192.168.196.20"
+    db_token =  "CQUltduhc3TU1Zw4E3sWYSkRZ_lLB2Ktx27zWtQNVGAStqOs2ERD2adRmnZUegqbcHbtTQZx-NAkCESMJgY7Ew=="
+    pos = "tpc2"
 
     misoPin = 9
     mosiPin = 10
@@ -44,9 +49,12 @@ if __name__ == "__main__":
 
     while 1:
         time.sleep(1)
-        for sens in [0,1,2,3,5,6,7,8]:
+        for sens in [0,1,2,3,4,5,6,7,8,9]:
             temp_C = eval('sens'+str(sens)+'.readTemp()')
             print("sens%d: %f degC\n" % (sens,temp_C))
             post = "temp,sens=" + str(sens) + ",pos=" + str(pos) + " value=" + str(temp_C)
+            #subprocess.call(["curl","--request","POST",db_ip+":"+str(db_port)+"/api/v2/write?bucket="+db_name+"&org=lhep","-H", "Authorization: Token "+db_token,"--data-binary", post])
+
+#            subprocess.call(["curl", "-i", "-XPOST", db_url+":"+str(db_port)+"/api/v2/write?org=lhep&bucket="+db_name,  header, post])
             subprocess.call(["curl", "-i", "-XPOST", db_url+":"+str(db_port)+"/write?db="+db_name, "--data-binary", post])
-    GPIO.cleanup()
+GPIO.cleanup()
