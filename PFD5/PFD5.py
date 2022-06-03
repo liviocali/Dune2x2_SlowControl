@@ -15,13 +15,20 @@ from sys import stdout
 
 from piads8688.ADS8688_definitions import *
 from piads8688 import ADS8688
+
+conf = ConfigParser()
+conf.read("../../config.ini")
+
+db = conf["DATABASE"]
+meta = conf["METADATA"]
+para = conf["PARAMETERS"]
  
 #HV_pedestal = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
 HV_pedestal = [0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022, 0.022 ]
 HV_factor =   [9.995,10.01,10.0,9.994,10.003,10.002,10.0,10.0]
 
 #INFLUXDB access string:
-url = "http://130.92.128.162:8086/write?db=singlemodule_nov2020"
+url = db["URL"]+":"+db["PORT"]+"/write?db="db["NAME"]
 ads = ADS8688()
 
 range_HV=R0 # range for HV divider inputs 0 to 5
@@ -110,7 +117,7 @@ try:
       """
       stdout.flush()
 
-      sleep(1)
+      sleep(para["CTIME"])
 
 except (KeyboardInterrupt):
     print("\n"*3 + "User exit.\n")
