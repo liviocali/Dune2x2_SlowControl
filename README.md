@@ -15,7 +15,7 @@ TO BE ADDED
 
 
 ## Task List
-- [ ] Upload Spellman scripts
+- [ ] Check Spellman scripts, update to InfluxDB v2 and implement config parser
 - [ ] Write MPOD scripts
 - [ ] Update RTD scripts to include module number
 - [ ] Write general example script of how to push to InfluxDB2
