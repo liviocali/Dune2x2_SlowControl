@@ -17,6 +17,7 @@ TO BE ADDED
 ## Task List
 - [ ] Check Spellman scripts, update to InfluxDB v2 and implement config parser
 - [ ] Write MPOD scripts
+- [ ] Write AIM TTi (SiPM ps input bias) scripts (see https://github.com/Planet911/tti-plp-remote/blob/master/tti-plp-remote.py)
 - [ ] Update RTD scripts to include module number
 - [ ] Write general example script of how to push to InfluxDB2
 - [ ] Setup Grafana pages
