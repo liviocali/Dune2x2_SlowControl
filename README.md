@@ -1,5 +1,7 @@
 # Slow Control scipts for the DUNE ND-LAr 2x2 demonstrator
 
+Collection of existing slow control software for the DUNE ND-LAr 2x2 demonstrator experiment.
+
 ## Configuration
 Configuration filename by default: "config.ini"\
 To use example config file:\
@@ -20,7 +22,7 @@ TO BE ADDED
 - [x] Write AIM TTi (SiPM ps input bias) scripts (see https://github.com/Planet911/tti-plp-remote/blob/master/tti-plp-remote.py)
 - [ ] Include database push to TTI scripts
 - [ ] Update RTD scripts to include module number
+- [ ] Test RTD scripts on device
 - [ ] Write general example script of how to push to InfluxDB2
-- [ ] Setup Grafana pages
 - [ ] Upload/Write remote start/stop scripts
 - [ ] Have a beer :beer:
