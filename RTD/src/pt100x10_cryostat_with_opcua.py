@@ -65,7 +65,7 @@ async def main():
     async with s:
         while True:
             await asyncio.sleep(para["CTIME"])
-            for sens in range(para["RTD_START_SENS"],para["RTD_END_SENS"]):
+            for sens in para["RTD_SENS_LIST"]:
                 temp_C = eval('sens'+str(sens)+'.readTemp()')
                 print("sens%d: %f degC\n" % (sens,temp_C))
                 post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)

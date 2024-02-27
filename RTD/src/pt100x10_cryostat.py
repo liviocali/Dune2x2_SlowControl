@@ -50,12 +50,9 @@ if __name__ == "__main__":
 
     while 1:
         time.sleep(para["CTIME"])
-        for sens in range(para["RTD_START_SENS"],para["RTD_END_SENS"]):
+        for sens in para["RTD_SENS_LIST"]:
             temp_C = eval('sens'+str(sens)+'.readTemp()')
             print("sens%d: %f degC\n" % (sens,temp_C))
             post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)
-            #subprocess.call(["curl","--request","POST",db_ip+":"+str(db_port)+"/api/v2/write?bucket="+db_name+"&org=lhep","-H", "Authorization: Token "+db_token,"--data-binary", post])
-
-#            subprocess.call(["curl", "-i", "-XPOST", db_url+":"+str(db_port)+"/api/v2/write?org=lhep&bucket="+db_name,  header, post])
             subprocess.call(["curl", "-i", "-XPOST", db["URL"]+":"+str(db["PORT"])+"/write?db="+db["NAME"], "--data-binary", post])
 GPIO.cleanup()
