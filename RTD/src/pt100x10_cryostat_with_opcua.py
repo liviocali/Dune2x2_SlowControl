@@ -19,7 +19,7 @@ async def main():
 
     #Read device IP
     ips = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    ips.connect((db["IP"], 80))
+    ips.connect((db["PINGIP"], 80))
     ip = ips.getsockname()[0]
     ips.close()
 
@@ -30,9 +30,9 @@ async def main():
     opc_port = "4841"
     s.set_endpoint("opc.tcp://"+ip+":"+opc_port)
     idx = await s.register_namespace("http://"+ip+":"+opc_port)
-    uaobj = await s.nodes.objects.add_object(idx,"RTD_server_01")
+    uaobj = await s.nodes.objects.add_object(idx,db["OPCSERVERNAME"])
     uavar = []
-    for sens in range(para["RTD_START_SENS"],para["RTD_END_SENS"]):
+    for sens in json.loads(para["RTD_SENS_LIST"]):
             uavar.append(await uaobj.add_variable(idx,"sens%02d" % sens,273.15))
             await uavar[sens].set_writable()
 
@@ -72,3 +72,6 @@ async def main():
                 post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)
                 subprocess.call(["curl", "-i", "-XPOST", db["URL"]+":"+str(db["PORT"])+"/write?db="+db["NAME"], "--data-binary", post])
                 await uavar[sens].write_value(temp_C+273.15)
+
+if __name__ == "__main__":
+    asyncio.run(main(), debug=True)
