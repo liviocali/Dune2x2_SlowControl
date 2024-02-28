@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import time, math
+import time, math, json
 import subprocess
 import asyncio
 from configparser import ConfigParser
@@ -11,7 +11,7 @@ async def main():
     import max31865
     
     conf = ConfigParser()
-    conf.read("../../config.ini")
+    conf.read("/home/pi/Dune2x2_SlowControl/config.ini")
 
     db = conf["DATABASE"]
     meta = conf["METADATA"]
@@ -65,8 +65,8 @@ async def main():
 
     async with s:
         while True:
-            await asyncio.sleep(para["CTIME"])
-            for sens in para["RTD_SENS_LIST"]:
+            await asyncio.sleep(int(para["CTIME"]))
+            for sens in json.loads(para["RTD_SENS_LIST"]):
                 temp_C = eval('sens'+str(sens)+'.readTemp()')
                 print("sens%d: %f degC\n" % (sens,temp_C))
                 post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)
