@@ -1,1 +1,1 @@
-screen -dmS bash -c 'exec start_rtd.sh; exec sh'
+screen -dmS Temp  /home/pi/Dune2x2_SlowControl/RTD/start_rtd.sh

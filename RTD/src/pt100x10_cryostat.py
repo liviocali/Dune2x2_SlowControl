@@ -3,16 +3,14 @@
 import time, math
 import subprocess
 from configparser import ConfigParser
-#import sys, os
-#sys.path.append("/home/pi/requests-main")
-#import requests
+import json
 
 if __name__ == "__main__":
 
     import max31865
 
     conf = ConfigParser()
-    conf.read("~/Dune2x2_SlowControl/config.ini")
+    conf.read("/home/pi/Dune2x2_SlowControl/config.ini")
 
     db = conf["DATABASE"]
     meta = conf["METADATA"]
@@ -49,8 +47,8 @@ if __name__ == "__main__":
     sens9 = max31865.max31865(cs9Pin,misoPin,mosiPin,clkPin)
 
     while 1:
-        time.sleep(para["CTIME"])
-        for sens in para["RTD_SENS_LIST"]:
+        time.sleep(int(para["CTIME"]))
+        for sens in json.loads(para["RTD_SENS_LIST"]):
             temp_C = eval('sens'+str(sens)+'.readTemp()')
             print("sens%d: %f degC\n" % (sens,temp_C))
             post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)
