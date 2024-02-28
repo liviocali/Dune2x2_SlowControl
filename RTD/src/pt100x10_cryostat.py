@@ -12,7 +12,7 @@ if __name__ == "__main__":
     import max31865
 
     conf = ConfigParser()
-    conf.read("../../config.ini")
+    conf.read("~/Dune2x2_SlowControl/config.ini")
 
     db = conf["DATABASE"]
     meta = conf["METADATA"]
