@@ -32,9 +32,9 @@ async def main():
     idx = await s.register_namespace("http://"+ip+":"+opc_port)
     uaobj = await s.nodes.objects.add_object(idx,db["OPCSERVERNAME"])
     uavar = []
-    for sens in json.loads(para["RTD_SENS_LIST"]):
-            uavar.append(await uaobj.add_variable(idx,"sens%02d" % sens,273.15))
-            await uavar[sens].set_writable()
+    for i, sens in enumerate(json.loads(para["RTD_SENS_LIST"])):
+        uavar.append(await uaobj.add_variable(idx,"sens%02d" % sens,273.15))
+        await uavar[i].set_writable()
 
 
     misoPin = 9
@@ -66,12 +66,12 @@ async def main():
     async with s:
         while True:
             await asyncio.sleep(int(para["CTIME"]))
-            for sens in json.loads(para["RTD_SENS_LIST"]):
+            for i, sens in enumerate(json.loads(para["RTD_SENS_LIST"])):
                 temp_C = eval('sens'+str(sens)+'.readTemp()')
                 print("sens%d: %f degC\n" % (sens,temp_C))
                 post = "temp,sens=" + str(sens) + ",pos=" + str(meta["POS"]) + " value=" + str(temp_C)
                 subprocess.call(["curl", "-i", "-XPOST", db["URL"]+":"+str(db["PORT"])+"/write?db="+db["NAME"], "--data-binary", post])
-                await uavar[sens].write_value(temp_C+273.15)
+                await uavar[i].write_value(temp_C+273.15)
 
 if __name__ == "__main__":
     asyncio.run(main(), debug=True)
