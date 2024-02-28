@@ -2,6 +2,7 @@
 import time, math
 import subprocess
 import asyncio
+from configparser import ConfigParser
 
 from asyncua import Server, ua
 import socket

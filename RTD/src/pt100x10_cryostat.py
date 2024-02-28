@@ -27,13 +27,13 @@ if __name__ == "__main__":
     cs0Pin = 26
     cs1Pin = 19
     cs2Pin = 13
-    cs3Pin = 06
-    cs4Pin = 05
+    cs3Pin = 0o6
+    cs4Pin = 0o5
     cs5Pin = 27
     cs6Pin = 17
-    cs7Pin = 04
-    cs8Pin = 03
-    cs9Pin = 02
+    cs7Pin = 0o4
+    cs8Pin = 0o3
+    cs9Pin = 0o2
 
     utiPow = 21
 
