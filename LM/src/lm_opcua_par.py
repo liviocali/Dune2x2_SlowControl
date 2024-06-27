@@ -3,6 +3,7 @@ import time
 import json
 import subprocess
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
 from asyncua import Server, ua
 import socket
@@ -46,15 +47,15 @@ async def read_values(dev, shared, lock):
             shared['cur'] = cur
         await asyncio.sleep(0.1)  # Small delay to prevent tight loop
 
-async def push_values(para, db, uavar, shared, lock):
+def push_values(para, db, uavar, shared, lock):
     while True:
-        await asyncio.sleep(int(para["CTIME"]))
-        async with lock:
+        time.sleep(int(para["CTIME"]))
+        with lock:
             cur = shared.get('cur', 0.0)
         print("current:", cur)
         post = f"lm,format=raw_cur value={cur}"
         subprocess.call(["curl", "-i", "-XPOST", f"{db['URL']}:{db['PORT']}/write?db={db['NAME']}", "--data-binary", post])
-        await uavar.write_value(cur)
+        asyncio.run(uavar.write_value(cur))
 
 async def main():
     conf = ConfigParser()
@@ -86,11 +87,15 @@ async def main():
 
     shared = {}
     lock = asyncio.Lock()
-    
-    async with s:
-        reader_task = asyncio.create_task(read_values(dev, shared, lock))
-        writer_task = asyncio.create_task(push_values(para, db, uavar, shared, lock))
-        await asyncio.gather(reader_task, writer_task)
+
+    # Run read_values in the main asyncio loop
+    reader_task = asyncio.create_task(read_values(dev, shared, lock))
+
+    # Run push_values in a separate thread
+    loop = asyncio.get_running_loop()
+    with ThreadPoolExecutor() as executor:
+        executor.submit(push_values, para, db, uavar, shared, lock)
+        await reader_task
 
     dev.close()
 
