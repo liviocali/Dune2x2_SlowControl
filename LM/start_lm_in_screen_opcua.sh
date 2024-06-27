@@ -1,0 +1,1 @@
+screen -dmS Temp  /home/pi/Dune2x2_SlowControl/LM/start_lm_opcua.sh
