@@ -1,7 +1,8 @@
 import time 
 from datetime import datetime
 import numpy as np
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import SYNCHRONOUS
 import paramiko
 import warnings 
 import threading
@@ -11,6 +12,7 @@ import os
 warnings.filterwarnings(action='ignore',module='.*paramiko.*')
 #from paramiko.py3compat import input
 
+from configparser import ConfigParser
 conf = ConfigParser()
 conf.read("/home/pi/Dune2x2_SlowControl/config.ini")
 
@@ -18,10 +20,10 @@ class GIZMO():
     '''
     This class represents the template for an MPOD.
     '''
-    def __init__(self, module, unit, dict_unit):
+    def __init__(self):
         self.conf = ConfigParser()
-        self.conf.read("/home/pi/Dune2x2_SlowControl/config.ini")
-        self.crate_status = self.getCrateStatus()
+        self.conf.read("config.ini")
+        self.crate_status = True
         self.error_status = False
 
         # START CONTINUOUS MONITORING ON OBJECT CREATION
@@ -78,11 +80,12 @@ class GIZMO():
 
         Description:    Record timestamp on InfluxDB
         '''
-        client = InfluxDBClient(host = self.conf["DATABASE"]["IP"], port = int(self.conf["DATABASE"]["PORT"]), database = self.conf["DATABASE"]["NAME"])
-        client.write_points(self.JSON_setup(measurement, value))
+        client = InfluxDBClient(url = self.conf["DATABASE"]["URL"]+":"+self.conf["DATABASE"]["PORT"], token = self.conf["DATABASE"]["TOKEN"], org = self.conf["DATABASE"]["ORG"])
+        write_api = client.write_api(write_options=SYNCHRONOUS)
+        write_api.write(bucket=self.conf["DATABASE"]["BUCKET"], record=self.dict_setup(measurement, value))
         client.close()
 
-    def JSON_setup(self, measurement, value):
+    def dict_setup(self, measurement, value):
         '''
         Inputs:         - Measurement (i.e. resistance)
                         - Value (i.e. resistance value)
@@ -91,17 +94,15 @@ class GIZMO():
 
         Description:    Provides new timestamp ready to be added to InfluxDB
         '''
-        json_payload = []
         data = {
             # Table name
-            "measurement" : measurement, 
+            "measurement" : "gizmo", 
             # Time stamp
             "time" : datetime.utcnow().strftime('%Y%m%d %H:%M:%S'),
             # Data fields 
             "fields" : {measurement : value}
         }
-        json_payload.append(data)
-        return json_payload
+        return data
 
     def CONTINUOUS_monitoring(self):
         '''
@@ -109,27 +110,31 @@ class GIZMO():
         '''
         powering_list = ["resistance","threshold","magnitude","current","charge","phase"]
         print("GIZMO Continuous DAQ Activated. Taking data in real time")
-
         # Setting up GIZMO client
         try:
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(self.conf["GIZMO"]["IP"], self.conf["GIZMO"]["PORT"], self.conf["GIZMO"]["USERNAME"], self.conf["GIZMO"]["PW"], timeout=200)
+            client.connect(self.conf["GIZMO"]["IP"], self.conf["GIZMO"]["PORT"], "root", "", timeout=200)
             chan = client.invoke_shell()
             chan.send('./GIZMO.elf 1\n')
         except Exception as e:
-            print("Something is wrong!")
+            print("Something is wrong (connection)!")
             self.crate_status = False
             self.error_status = True
             print('*** Caught exception: %s: %s' % (e.__class__, e))
 
         # Take data while gizmo is ON
+        for powering in powering_list:
+            print(f"{powering}",end="\t")
+            if powering in ["current","charge"]:
+                print("\t",end="")
+        print("\n",end="")
         while self.crate_status:
             try:
                 # Creating arrays for data 
                 sampled_values = {}
                 for powering in powering_list:
-                    sampled_values[powering] = []    
+                    sampled_values[powering] = []
                 # Record data for 5 seconds
                 elapsed_time = 0
                 start_time = time.time()
@@ -157,7 +162,9 @@ class GIZMO():
                     # Send data to influxDB
                     for powering in powering_list:
                         mean, RMS = np.mean(sampled_values[powering]), np.sqrt(np.mean(np.square(sampled_values[powering])))
+                        print("%.2f" % mean, end="\t\t")
                         self.INFLUX_write(powering, mean)
+                    print("\n",end="")
                     # Set crate status if no error
                     self.crate_status = True
                     self.error_status = False
@@ -166,7 +173,7 @@ class GIZMO():
                     #print("ELAPSED TIME : " + str(elapsed_time))
 
             except Exception as e:
-                print("Something is wrong!")
+                print("Something is wrong (fetch data)!")
                 self.crate_status = False
                 self.error_status = True
                 print('*** Caught exception: %s: %s' % (e.__class__, e))

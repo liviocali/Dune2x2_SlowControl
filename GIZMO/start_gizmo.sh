@@ -1,1 +1,1 @@
-python GIZMO/src/GIZMO_script.py
+python3 GIZMO/src/GIZMO_script.py
