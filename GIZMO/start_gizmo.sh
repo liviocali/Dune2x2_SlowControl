@@ -1,1 +1,0 @@
-python GIZMO/src/GIZMO_script.py
