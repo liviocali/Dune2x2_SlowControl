@@ -24,7 +24,7 @@ import pytz
 from influxdb import InfluxDBClient
 
 conf = configparser.ConfigParser()
-conf.read('/home/pi/Dune2x2_SlowControl/config.ini')
+conf.read('/home/pi/SlowControls2x2/HVFilterPot_Raspi/config.ini')
 
 db = conf["DATABASE"]
 meta = conf["METADATA"]
@@ -36,9 +36,12 @@ ERASE_TO_END_OF_LINE = '\x1b[0K'
 OFFSET_SENS_A = 0.0
 OFFSET_SENS_B = 0.0
 OFFSET_SENS_C = 0.0
+
 #ped = [146.1,152.4,147.3,147.3,146.1]
 #ped = [0, 153.6, 147.5, 147.9,152.9] #New pedestal values
 #kv = [0.01106,0.01098,0.01094,0.01092,0.01106]
+
+# New calib values, 2025-08-27, elog 6905
 ped = [0, -1.7572, -1.7115, -1.7129, -1.7556]
 kv = [0, 10.9639, 10.8981, 10.8949 ,10.9030]
 
@@ -87,8 +90,9 @@ def main():
                 print('\r        \033[14A{:8d}'.format(samples_per_channel))
                 
                 # Read TCs
+                values_tc = []
                 for channel in channels_tc:
-                    temp_value = hat_tc.t_in_read(channel)
+                    value_tc = hat_tc.t_in_read(channel)
                     
                     #corr = (hat_tc.cjc_read(channel)-24.3)*1.7
                     #value=value - corr + 4.5
@@ -97,18 +101,19 @@ def main():
                         #position = "A"
                         #value += OFFSET_SENS_A
                     
-                    if temp_value == mcc134.OPEN_TC_VALUE:
+                    if value_tc == mcc134.OPEN_TC_VALUE:
                         print('     Open     ', end='')
-                    elif temp_value == mcc134.OVERRANGE_TC_VALUE:
+                    elif value_tc == mcc134.OVERRANGE_TC_VALUE:
                         print('     OverRange', end='')
-                    elif temp_value == mcc134.COMMON_MODE_TC_VALUE:
+                    elif value_tc == mcc134.COMMON_MODE_TC_VALUE:
                         print('   Common Mode', end='')
                     else:
-                        print('\r\033[2B{:12.2f} '.format(temp_value))
-                        
-                values_adc = []
-                
+                        print('\r\033[2B{:12.2f} '.format(value_tc))
+
+                    values_tc.append(value_tc)
+                                        
                 # Read ADC
+                values_adc = []
                 for channel in channels_adc:
                     value_adc = hat_adc.a_in_read(channel)
                     print('\r\033[34G\033[2B{:.3f}'.format(value_adc), end = '') #raw [V]
@@ -126,14 +131,27 @@ def main():
                 fermi_time = utc_timezone.astimezone(fermi_timezone)
                 fermi_time_str = fermi_time.strftime('%Y-%m-%d %H:%M:%S.%f') 
                 
-                #Write data to json payload and send to InfluxDB
-                data = {#Table name
-                        "measurement":"Raspi",
-                        #Time Stamp
-                        "time": fermi_time_str,
-                        #Data Fields
-                        "fields":{"Temperature":temp_value, "CH0":values_adc[0], "CH1":values_adc[1],"CH2":values_adc[2],"CH3":values_adc[3], "CH4":values_adc[4]}
-                        }
+                # Write data to json payload and send to InfluxDB
+                # Build Data fields
+                fields = {}
+
+                # Add all TC values
+                for i, val in enumerate(values_tc):
+                    fields[f"Temperature{i}"] = val
+
+                # Add all ADC values
+                for j, val in enumerate(values_adc):
+                    fields[f"CH{j}"] = val
+
+                # Wrap everything into your data dict
+                data = {
+                    # Table name
+                    "measurement": "Raspi",
+                    # Time Stamp
+                    "time": fermi_time_str,
+                    # Data Fields
+                    "fields": fields
+                }
 
                 json_payload.append(data)
                 client.write_points(json_payload)
