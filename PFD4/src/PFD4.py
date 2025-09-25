@@ -4,7 +4,10 @@
     MCC 134 HAT Temp reader
 
     Purpose:
-        Read temp values from raspi hat and push to influxdb
+        Read voltage values from raspi hat and push to influxdb
+
+    Last modified:  2025-08-27
+    by:             Nicolas Sallin, nicolas.sallin@unibe.ch
 
 """
 
